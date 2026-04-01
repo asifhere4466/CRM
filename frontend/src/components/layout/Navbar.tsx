@@ -1,18 +1,19 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/auth.store';
+import { useRouter, usePathname } from "next/navigation";
+import { useAuthStore } from "@/store/auth.store";
 
 export function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, logout } = useAuthStore();
 
   const handleLogout = () => {
     logout();
-    router.push('/login');
+    router.push("/login");
   };
 
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin = user?.role === "ADMIN";
 
   return (
     <nav className="bg-white shadow-sm border-b">
@@ -22,28 +23,45 @@ export function Navbar() {
             <h1 className="text-xl font-bold text-gray-900">CRM System</h1>
             <div className="ml-10 flex space-x-4">
               <button
-                onClick={() => router.push('/customers')}
-                className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                onClick={() => router.push("/customers")}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  pathname?.startsWith("/customers")
+                    ? "text-blue-700 border-b-2 border-blue-700"
+                    : "text-gray-700 hover:text-gray-900"
+                }`}
               >
                 Customers
               </button>
               <button
-                onClick={() => router.push('/activity-logs')}
-                className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                onClick={() => router.push("/activity-logs")}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  pathname?.startsWith("/activity-logs")
+                    ? "text-blue-700 border-b-2 border-blue-700"
+                    : "text-gray-700 hover:text-gray-900"
+                }`}
               >
                 Activity Logs
               </button>
               {isAdmin && (
                 <>
                   <button
-                    onClick={() => router.push('/users')}
-                    className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                    onClick={() => router.push("/users")}
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      pathname?.startsWith("/users")
+                        ? "text-blue-700 border-b-2 border-blue-700"
+                        : "text-gray-700 hover:text-gray-900"
+                    }`}
                   >
                     Users
                   </button>
                   <button
-                    onClick={() => router.push('/admin/organizations')}
-                    className="text-purple-700 hover:text-purple-900 px-3 py-2 rounded-md text-sm font-medium"
+                    onClick={() => router.push("/admin/organizations")}
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${pathname?.startsWith(
+                      "/admin/organizations",
+                    )
+                    // ? "text-purple-700 border-b-2 border-purple-700"
+                    // : "text-purple-700 hover:text-purple-900"
+                    }`}
                   >
                     All Organizations
                   </button>
@@ -58,8 +76,8 @@ export function Navbar() {
                 <span
                   className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                     isAdmin
-                      ? 'bg-purple-100 text-purple-800'
-                      : 'bg-blue-100 text-blue-800'
+                      ? "bg-purple-100 text-purple-800"
+                      : "bg-blue-100 text-blue-800"
                   }`}
                 >
                   {user?.role}

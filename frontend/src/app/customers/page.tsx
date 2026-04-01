@@ -1,21 +1,42 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import { customerService } from '@/services/customer.service';
-import { useDebounce } from '@/hooks/useDebounce';
-import { Navbar } from '@/components/layout/Navbar';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { customerService } from "@/services/customer.service";
+import { useDebounce } from "@/hooks/useDebounce";
+import { Navbar } from "@/components/layout/Navbar";
+import { useAuthStore } from "@/store/auth.store";
 
 export default function CustomersPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState<"all" | "active" | "deleted">(
+    "all",
+  );
   const debouncedSearch = useDebounce(search, 500);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['customers', page, debouncedSearch],
-    queryFn: () => customerService.getCustomers(page, 20, debouncedSearch),
+  const includeDeleted = user?.role === "ADMIN" && activeTab !== "active";
+
+  const { data, isLoading, error } = useQuery<
+    import("@/types").PaginatedResponse<import("@/types").Customer>,
+    Error
+  >({
+    queryKey: ["customers", page, debouncedSearch, activeTab],
+    queryFn: () =>
+      customerService.getCustomers(page, 20, debouncedSearch, includeDeleted),
+    staleTime: 1000 * 30,
+    gcTime: 1000 * 60 * 3,
+  });
+
+  const restoreMutation = useMutation({
+    mutationFn: (id: string) => customerService.restoreCustomer(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+    },
   });
 
   return (
@@ -23,14 +44,56 @@ export default function CustomersPage() {
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
-          <button
-            onClick={() => router.push('/customers/create')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
-          >
-            Add Customer
-          </button>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-3">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
+            <p className="text-sm text-gray-500">
+              (Admins see deleted customers and can restore)
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="inline-flex rounded-md border border-gray-200 overflow-hidden">
+              <button
+                onClick={() => setActiveTab("all")}
+                className={`px-4 py-2 text-sm font-medium focus:outline-none ${
+                  activeTab === "all"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                All Customers
+              </button>
+              <button
+                onClick={() => setActiveTab("active")}
+                className={`px-4 py-2 text-sm font-medium focus:outline-none ${
+                  activeTab === "active"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                Active
+              </button>
+              {user?.role === "ADMIN" && (
+                <button
+                  onClick={() => setActiveTab("deleted")}
+                  className={`px-4 py-2 text-sm font-medium focus:outline-none ${
+                    activeTab === "deleted"
+                      ? "bg-red-600 text-white"
+                      : "bg-white text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  Deleted
+                </button>
+              )}
+            </div>
+            <button
+              onClick={() => router.push("/customers/create")}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+            >
+              Add Customer
+            </button>
+          </div>
         </div>
 
         <div className="mb-6">
@@ -58,6 +121,15 @@ export default function CustomersPage() {
 
         {data && (
           <>
+            <div className="mb-4">
+              <p className="text-sm text-gray-500">
+                {activeTab === "all" &&
+                  "Showing all customers (including deleted)."}
+                {activeTab === "active" && "Showing only active customers."}
+                {activeTab === "deleted" &&
+                  "Showing only deleted (soft-deleted) customers."}
+              </p>
+            </div>
             <div className="bg-white shadow-sm rounded-lg overflow-hidden">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -78,16 +150,32 @@ export default function CustomersPage() {
                       Notes
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {data.data.map((customer) => (
+                  {(activeTab === "all"
+                    ? data.data
+                    : activeTab === "active"
+                      ? data.data.filter((customer) => !customer.deletedAt)
+                      : data.data.filter((customer) => !!customer.deletedAt)
+                  ).map((customer) => (
                     <tr
                       key={customer.id}
-                      className="hover:bg-gray-50 cursor-pointer"
-                      onClick={() => router.push(`/customers/${customer.id}`)}
+                      className={`${
+                        customer.deletedAt
+                          ? "bg-red-50 opacity-80 cursor-default "
+                          : "hover:bg-gray-50 cursor-pointer "
+                      }`}
+                      onClick={() => {
+                        if (!customer.deletedAt) {
+                          router.push(`/customers/${customer.id}`);
+                        }
+                      }}
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {customer.name}
@@ -96,24 +184,48 @@ export default function CustomersPage() {
                         {customer.email}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {customer.phone || '-'}
+                        {customer.phone || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {customer.assignedTo?.name || 'Unassigned'}
+                        {customer.assignedTo?.name || "Unassigned"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {customer._count?.notes || 0}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/customers/${customer.id}/edit`);
-                          }}
-                          className="text-blue-600 hover:text-blue-900 mr-4"
-                        >
-                          Edit
-                        </button>
+                        {customer.deletedAt ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                            Deleted
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                            Active
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {!customer.deletedAt && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/customers/${customer.id}/edit`);
+                            }}
+                            className="text-blue-600 hover:text-blue-900 mr-4"
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {user?.role === "ADMIN" && customer.deletedAt && (
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await restoreMutation.mutateAsync(customer.id);
+                            }}
+                            className="text-green-600 hover:text-green-900"
+                          >
+                            Restore
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

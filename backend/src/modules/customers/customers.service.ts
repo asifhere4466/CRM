@@ -3,13 +3,13 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
-} from '@nestjs/common';
-import { PrismaService } from '../../config/prisma.service';
-import { ActivityLogService } from '../activity-log/activity-log.service';
-import { CreateCustomerDto } from './dto/create-customer.dto';
-import { UpdateCustomerDto } from './dto/update-customer.dto';
-import { AssignCustomerDto } from './dto/assign-customer.dto';
-import { Prisma } from '@prisma/client';
+} from "@nestjs/common";
+import { PrismaService } from "../../config/prisma.service";
+import { ActivityLogService } from "../activity-log/activity-log.service";
+import { CreateCustomerDto } from "./dto/create-customer.dto";
+import { UpdateCustomerDto } from "./dto/update-customer.dto";
+import { AssignCustomerDto } from "./dto/assign-customer.dto";
+import { Prisma } from "@prisma/client";
 
 const MAX_ASSIGNMENTS_PER_USER = 5;
 
@@ -43,9 +43,9 @@ export class CustomersService {
     });
 
     await this.activityLogService.create(
-      'customer',
+      "customer",
       customer.id,
-      'CUSTOMER_CREATED',
+      "CUSTOMER_CREATED",
       userId,
       organizationId,
       {
@@ -63,18 +63,19 @@ export class CustomersService {
     page: number = 1,
     limit: number = 20,
     search?: string,
+    includeDeleted = false,
   ) {
     const skip = (page - 1) * limit;
 
     const where: Prisma.CustomerWhereInput = {
       organizationId,
-      deletedAt: null,
+      ...(includeDeleted ? {} : { deletedAt: null }),
     };
 
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
       ];
     }
 
@@ -95,7 +96,7 @@ export class CustomersService {
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
@@ -143,13 +144,13 @@ export class CustomersService {
               },
             },
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
         },
       },
     });
 
     if (!customer) {
-      throw new NotFoundException('Customer not found');
+      throw new NotFoundException("Customer not found");
     }
 
     return customer;
@@ -166,7 +167,30 @@ export class CustomersService {
     });
 
     if (!existing) {
-      throw new NotFoundException('Customer not found');
+      throw new NotFoundException("Customer not found");
+    }
+
+    const changes: Record<string, { from: any; to: any }> = {};
+
+    if (
+      updateCustomerDto.name !== undefined &&
+      updateCustomerDto.name !== existing.name
+    ) {
+      changes.name = { from: existing.name, to: updateCustomerDto.name };
+    }
+
+    if (
+      updateCustomerDto.email !== undefined &&
+      updateCustomerDto.email !== existing.email
+    ) {
+      changes.email = { from: existing.email, to: updateCustomerDto.email };
+    }
+
+    if (
+      updateCustomerDto.phone !== undefined &&
+      updateCustomerDto.phone !== existing.phone
+    ) {
+      changes.phone = { from: existing.phone, to: updateCustomerDto.phone };
     }
 
     const customer = await this.prisma.customer.update({
@@ -184,13 +208,14 @@ export class CustomersService {
     });
 
     await this.activityLogService.create(
-      'customer',
+      "customer",
       customer.id,
-      'CUSTOMER_UPDATED',
+      "CUSTOMER_UPDATED",
       userId,
       organizationId,
       {
-        changes: updateCustomerDto as any,
+        customerName: customer.name,
+        changes,
       },
     );
 
@@ -210,7 +235,7 @@ export class CustomersService {
         });
 
         if (!customer) {
-          throw new NotFoundException('Customer not found');
+          throw new NotFoundException("Customer not found");
         }
 
         const user = await tx.user.findFirst({
@@ -221,7 +246,7 @@ export class CustomersService {
         });
 
         if (!user) {
-          throw new NotFoundException('User not found');
+          throw new NotFoundException("User not found");
         }
 
         // Lock the user's assigned customers to prevent race conditions
@@ -259,9 +284,9 @@ export class CustomersService {
         });
 
         await this.activityLogService.create(
-          'customer',
+          "customer",
           updatedCustomer.id,
-          'CUSTOMER_ASSIGNED',
+          "CUSTOMER_ASSIGNED",
           userId,
           organizationId,
           {
@@ -286,7 +311,7 @@ export class CustomersService {
     });
 
     if (!customer) {
-      throw new NotFoundException('Customer not found');
+      throw new NotFoundException("Customer not found");
     }
 
     const deleted = await this.prisma.customer.update({
@@ -297,9 +322,9 @@ export class CustomersService {
     });
 
     await this.activityLogService.create(
-      'customer',
+      "customer",
       deleted.id,
-      'CUSTOMER_DELETED',
+      "CUSTOMER_DELETED",
       userId,
       organizationId,
       {
@@ -307,7 +332,7 @@ export class CustomersService {
       },
     );
 
-    return { message: 'Customer soft deleted successfully' };
+    return { message: "Customer soft deleted successfully" };
   }
 
   async restore(id: string, organizationId: string, userId: string) {
@@ -316,11 +341,11 @@ export class CustomersService {
     });
 
     if (!customer) {
-      throw new NotFoundException('Customer not found');
+      throw new NotFoundException("Customer not found");
     }
 
     if (!customer.deletedAt) {
-      throw new BadRequestException('Customer is not deleted');
+      throw new BadRequestException("Customer is not deleted");
     }
 
     const restored = await this.prisma.customer.update({
@@ -340,13 +365,14 @@ export class CustomersService {
     });
 
     await this.activityLogService.create(
-      'customer',
+      "customer",
       restored.id,
-      'CUSTOMER_RESTORED',
+      "CUSTOMER_RESTORED",
       userId,
       organizationId,
       {
-        customerName: customer.name,
+        customerName: restored.name,
+        restored: true,
       },
     );
 

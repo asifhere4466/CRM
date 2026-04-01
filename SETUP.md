@@ -41,36 +41,18 @@ npm install
 
 1. **Create Database**:
 
-```bash
-psql -U postgres
-CREATE DATABASE crm_db;
-\q
-```
-
-2. **Configure Backend**:
-
-```bash
-cd backend
-cp .env.example .env
-```
+Acess the .env below are the credentials
+I have created database in railway below is the url of my account you can setup by using the public url that I have included in the env this is the browser url
+"https://railway.com/project/c527554f-17e0-43cc-aba7-d24229de976d/service/3967ec49-daf4-4be4-8e1c-ac84a9d252e5/database?environmentId=67a65eec-9743-4129-b0ff-c7a0e5807e3f&state=table&table=users"
 
 3. **Edit `.env`**:
 
 ```env
-DATABASE_URL="postgresql://postgres:password@localhost:5432/crm_db?schema=public"
-JWT_SECRET="your-super-secret-key-change-this"
+DATABASE_URL="postgresql://postgres:bNXuXjKcyZPlDyuJQlZpjVKFHLcxNNiO@interchange.proxy.rlwy.net:53643/railway"
+JWT_SECRET="3VLFR8kljjdr4Lm5G0xFFDzyz3nf0iZNRLj774jJsE1"
 PORT=3001
 FRONTEND_URL="http://localhost:3000"
 ```
-
-### Option B: Railway PostgreSQL (Cloud)
-
-1. Create account at [railway.app](https://railway.app)
-2. Create new project → Add PostgreSQL
-3. Copy `DATABASE_URL` from Railway dashboard
-4. Paste into `backend/.env`
-
----
 
 ## Step 3: Run Migrations & Seed
 
@@ -98,7 +80,7 @@ npx prisma db seed
 ✅ Org2 customers created
 ✅ Soft-deleted customer created for testing
 
-🎉 Seed data created successfully!
+Seed data created successfully!
 ```
 
 ---
@@ -174,8 +156,11 @@ npm run dev
 
 - Admin: `admin@techstart.com` / `password123`
 - Member: `member@techstart.com` / `password123`
+  Organization 3 : Global Solutions Ltd
+  Admin: `admin@globalsolutions.com` / `password123`
+  Member: `member@globalsolutions.com` / `password123`
 
----
+## YOU CAN ALSO ACCESS ACCOUNTS AND LOGINS IN DATABSE
 
 ## Step 7: Verify Features
 
@@ -187,7 +172,7 @@ npm run dev
 
 2. **Customers**
    - [ ] View customer list (should see 20 customers)
-   - [ ] Search for "Alice" (debounced search)
+   - [ ] Search for "username" (debounced search)
    - [ ] Click pagination (should work smoothly)
    - [ ] Create new customer (should auto-assign to you)
    - [ ] Edit customer details
@@ -213,35 +198,17 @@ npm run dev
    - [ ] Delete a customer
    - [ ] Verify customer disappears from list
    - [ ] Check activity log shows "Customer Deleted"
+         ONLY ADMINS can also restore delted users
 
 7. **Multi-Tenancy**
    - [ ] Logout
-   - [ ] Login as admin@techstart.com
+   - [ ] Try to login with differnet organization you will see data accordingly
    - [ ] Verify you see different customers (TechStart customers)
    - [ ] Verify you cannot see Acme customers
-
-8. **Admin Access**
-   - [ ] Login as admin@acme.com
-   - [ ] Test admin endpoints in Swagger:
-     - GET `/organizations` (should see all orgs)
-     - GET `/organizations/admin/customers` (should see all customers)
 
 ---
 
 ## Troubleshooting
-
-### "Cannot connect to database"
-
-```bash
-# Check PostgreSQL is running
-pg_isready
-
-# If not running (macOS):
-brew services start postgresql@14
-
-# If not running (Linux):
-sudo systemctl start postgresql
-```
 
 ### "Prisma Client not found"
 
@@ -390,16 +357,6 @@ Expected: `409 Conflict - "User already has 5 active assignments"`
 
 ---
 
-## Next Steps
-
-1. ✅ Application running locally
-2. 📖 Read [README.md](./README.md) for architecture details
-3. 🚀 Read [DEPLOYMENT.md](./DEPLOYMENT.md) for deployment guide
-4. 🧪 Test all features from checklist above
-5. 📝 Customize for your needs
-
----
-
 ## Quick Commands Reference
 
 ```bash
@@ -421,16 +378,3 @@ npm run lint               # Run linter
 ```
 
 ---
-
-## Support
-
-If you encounter issues:
-
-1. Check this troubleshooting section
-2. Review error messages in terminal
-3. Check browser console (F12)
-4. Verify environment variables
-5. Ensure PostgreSQL is running
-6. Try restarting both servers
-
-For architecture questions, see [README.md](./README.md)

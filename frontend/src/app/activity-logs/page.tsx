@@ -1,27 +1,27 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { activityLogService } from '@/services/activity-log.service';
-import { Navbar } from '@/components/layout/Navbar';
-import { ActivityLog } from '@/types';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { activityLogService } from "@/services/activity-log.service";
+import { Navbar } from "@/components/layout/Navbar";
+import { ActivityLog } from "@/types";
 
 const actionLabels: Record<string, string> = {
-  CUSTOMER_CREATED: 'Customer Created',
-  CUSTOMER_UPDATED: 'Customer Updated',
-  CUSTOMER_DELETED: 'Customer Deleted',
-  CUSTOMER_RESTORED: 'Customer Restored',
-  CUSTOMER_ASSIGNED: 'Customer Assigned',
-  NOTE_ADDED: 'Note Added',
+  CUSTOMER_CREATED: "Customer Created",
+  CUSTOMER_UPDATED: "Customer Updated",
+  CUSTOMER_DELETED: "Customer Deleted",
+  CUSTOMER_RESTORED: "Customer Restored",
+  CUSTOMER_ASSIGNED: "Customer Assigned",
+  NOTE_ADDED: "Note Added",
 };
 
 const actionColors: Record<string, string> = {
-  CUSTOMER_CREATED: 'bg-green-100 text-green-800',
-  CUSTOMER_UPDATED: 'bg-blue-100 text-blue-800',
-  CUSTOMER_DELETED: 'bg-red-100 text-red-800',
-  CUSTOMER_RESTORED: 'bg-purple-100 text-purple-800',
-  CUSTOMER_ASSIGNED: 'bg-yellow-100 text-yellow-800',
-  NOTE_ADDED: 'bg-indigo-100 text-indigo-800',
+  CUSTOMER_CREATED: "bg-green-100 text-green-800",
+  CUSTOMER_UPDATED: "bg-blue-100 text-blue-800",
+  CUSTOMER_DELETED: "bg-red-100 text-red-800",
+  CUSTOMER_RESTORED: "bg-purple-100 text-purple-800",
+  CUSTOMER_ASSIGNED: "bg-yellow-100 text-yellow-800",
+  NOTE_ADDED: "bg-indigo-100 text-indigo-800",
 };
 
 export default function ActivityLogsPage() {
@@ -29,18 +29,18 @@ export default function ActivityLogsPage() {
   const limit = 50;
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['activity-logs', page],
+    queryKey: ["activity-logs", page],
     queryFn: () => activityLogService.getActivityLogs(page, limit),
   });
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     }).format(date);
   };
 
@@ -100,7 +100,7 @@ export default function ActivityLogsPage() {
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               actionColors[log.action] ||
-                              'bg-gray-100 text-gray-800'
+                              "bg-gray-100 text-gray-800"
                             }`}
                           >
                             {actionLabels[log.action] || log.action}
@@ -125,12 +125,31 @@ export default function ActivityLogsPage() {
                         <td className="px-6 py-4 text-sm text-gray-500">
                           {log.metadata && (
                             <div className="max-w-xs">
-                              {log.metadata.customerName && (
-                                <div>
-                                  <span className="font-medium">Customer:</span>{' '}
-                                  {log.metadata.customerName}
+                              {log.action === "CUSTOMER_RESTORED" && (
+                                <div className="text-sm text-purple-700 font-medium">
+                                  Restored customer
+                                  {log.metadata.customerName
+                                    ? `: ${log.metadata.customerName}`
+                                    : ""}
                                 </div>
                               )}
+                              {log.action === "NOTE_ADDED" &&
+                                log.metadata.notePreview && (
+                                  <div>
+                                    <span className="font-medium">Note:</span>{" "}
+                                    {log.metadata.notePreview}
+                                  </div>
+                                )}
+                              {log.action !== "CUSTOMER_RESTORED" &&
+                                log.action !== "NOTE_ADDED" &&
+                                log.metadata.customerName && (
+                                  <div>
+                                    <span className="font-medium">
+                                      Customer:
+                                    </span>{" "}
+                                    {log.metadata.customerName}
+                                  </div>
+                                )}
                               {log.metadata.customerEmail && (
                                 <div className="text-xs text-gray-400">
                                   {log.metadata.customerEmail}
@@ -140,7 +159,7 @@ export default function ActivityLogsPage() {
                                 <div>
                                   <span className="font-medium">
                                     Assigned to:
-                                  </span>{' '}
+                                  </span>{" "}
                                   {log.metadata.assignedToName}
                                 </div>
                               )}
@@ -155,10 +174,13 @@ export default function ActivityLogsPage() {
                                   <div className="text-xs">
                                     <span className="font-medium">
                                       Changed:
-                                    </span>{' '}
-                                    {Object.keys(log.metadata.changes).join(
-                                      ', '
-                                    )}
+                                    </span>{" "}
+                                    {Object.entries(log.metadata.changes)
+                                      .map(
+                                        ([field, value]) =>
+                                          `${field}: ${value.from ?? ""} → ${value.to ?? ""}`,
+                                      )
+                                      .join(", ")}
                                   </div>
                                 )}
                             </div>

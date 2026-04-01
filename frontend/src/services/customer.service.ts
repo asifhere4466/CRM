@@ -1,27 +1,31 @@
-import api from './api';
+import api from "./api";
 import {
   Customer,
   PaginatedResponse,
   CreateCustomerInput,
   UpdateCustomerInput,
   AssignCustomerInput,
-} from '@/types';
+} from "@/types";
 
 export const customerService = {
   async getCustomers(
     page: number = 1,
     limit: number = 20,
-    search?: string
+    search?: string,
+    includeDeleted: boolean = false,
   ): Promise<PaginatedResponse<Customer>> {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
     });
     if (search) {
-      params.append('search', search);
+      params.append("search", search);
+    }
+    if (includeDeleted) {
+      params.append("includeDeleted", "true");
     }
     const response = await api.get<PaginatedResponse<Customer>>(
-      `/customers?${params.toString()}`
+      `/customers?${params.toString()}`,
     );
     return response.data;
   },
@@ -32,13 +36,13 @@ export const customerService = {
   },
 
   async createCustomer(data: CreateCustomerInput): Promise<Customer> {
-    const response = await api.post<Customer>('/customers', data);
+    const response = await api.post<Customer>("/customers", data);
     return response.data;
   },
 
   async updateCustomer(
     id: string,
-    data: UpdateCustomerInput
+    data: UpdateCustomerInput,
   ): Promise<Customer> {
     const response = await api.patch<Customer>(`/customers/${id}`, data);
     return response.data;
@@ -56,7 +60,7 @@ export const customerService = {
 
   async assignCustomer(
     id: string,
-    data: AssignCustomerInput
+    data: AssignCustomerInput,
   ): Promise<Customer> {
     const response = await api.post<Customer>(`/customers/${id}/assign`, data);
     return response.data;

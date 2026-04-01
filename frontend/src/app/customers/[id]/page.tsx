@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { customerService } from '@/services/customer.service';
-import { noteService } from '@/services/note.service';
-import { userService } from '@/services/user.service';
-import { Navbar } from '@/components/layout/Navbar';
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { customerService } from "@/services/customer.service";
+import { noteService } from "@/services/note.service";
+import { userService } from "@/services/user.service";
+import { Navbar } from "@/components/layout/Navbar";
 
 export default function CustomerDetailPage() {
   const params = useParams();
@@ -14,33 +14,34 @@ export default function CustomerDetailPage() {
   const queryClient = useQueryClient();
   const customerId = params.id as string;
 
-  const [noteContent, setNoteContent] = useState('');
+  const [noteContent, setNoteContent] = useState("");
   const [showAssignModal, setShowAssignModal] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState('');
-  const [error, setError] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [error, setError] = useState("");
 
   // Reset modal state when component mounts or customerId changes
   useEffect(() => {
     setShowAssignModal(false);
-    setSelectedUserId('');
-    setError('');
+    setSelectedUserId("");
+    setError("");
   }, [customerId]);
 
   const { data: customer, isLoading } = useQuery({
-    queryKey: ['customer', customerId],
+    queryKey: ["customer", customerId],
     queryFn: () => customerService.getCustomer(customerId),
   });
 
   const { data: users } = useQuery({
-    queryKey: ['users'],
+    queryKey: ["users"],
     queryFn: userService.getUsers,
   });
 
   const createNoteMutation = useMutation({
     mutationFn: noteService.createNote,
     onSuccess: () => {
-      setNoteContent('');
-      queryClient.invalidateQueries({ queryKey: ['customer', customerId] });
+      setNoteContent("");
+      queryClient.invalidateQueries({ queryKey: ["customer", customerId] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
     },
   });
 
@@ -49,19 +50,19 @@ export default function CustomerDetailPage() {
       customerService.assignCustomer(customerId, { userId }),
     onSuccess: () => {
       setShowAssignModal(false);
-      setSelectedUserId('');
-      setError('');
-      queryClient.invalidateQueries({ queryKey: ['customer', customerId] });
+      setSelectedUserId("");
+      setError("");
+      queryClient.invalidateQueries({ queryKey: ["customer", customerId] });
     },
     onError: (err: any) => {
-      setError(err.response?.data?.message || 'Failed to assign customer');
+      setError(err.response?.data?.message || "Failed to assign customer");
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: () => customerService.deleteCustomer(customerId),
     onSuccess: () => {
-      router.push('/customers');
+      router.push("/customers");
     },
   });
 
@@ -109,9 +110,7 @@ export default function CustomerDetailPage() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6 flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Customer Details
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900">Customer Details</h1>
           <div className="space-x-2">
             <button
               onClick={() => router.push(`/customers/${customerId}/edit`)}
@@ -127,9 +126,7 @@ export default function CustomerDetailPage() {
             </button>
             <button
               onClick={() => {
-                if (
-                  confirm('Are you sure you want to delete this customer?')
-                ) {
+                if (confirm("Are you sure you want to delete this customer?")) {
                   deleteMutation.mutate();
                 }
               }}
@@ -153,13 +150,13 @@ export default function CustomerDetailPage() {
             <div>
               <p className="text-sm font-medium text-gray-500">Phone</p>
               <p className="mt-1 text-lg text-gray-900">
-                {customer.phone || '-'}
+                {customer.phone || "-"}
               </p>
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Assigned To</p>
               <p className="mt-1 text-lg text-gray-900">
-                {customer.assignedTo?.name || 'Unassigned'}
+                {customer.assignedTo?.name || "Unassigned"}
               </p>
             </div>
           </div>
@@ -178,12 +175,10 @@ export default function CustomerDetailPage() {
             />
             <button
               type="submit"
-              disabled={
-                !noteContent.trim() || createNoteMutation.isPending
-              }
+              disabled={!noteContent.trim() || createNoteMutation.isPending}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
-              {createNoteMutation.isPending ? 'Adding...' : 'Add Note'}
+              {createNoteMutation.isPending ? "Adding..." : "Add Note"}
             </button>
           </form>
 
@@ -198,9 +193,7 @@ export default function CustomerDetailPage() {
                   <div className="mt-2 flex items-center text-sm text-gray-500">
                     <span>{note.createdBy.name}</span>
                     <span className="mx-2">•</span>
-                    <span>
-                      {new Date(note.createdAt).toLocaleDateString()}
-                    </span>
+                    <span>{new Date(note.createdAt).toLocaleDateString()}</span>
                   </div>
                 </div>
               ))
@@ -243,13 +236,13 @@ export default function CustomerDetailPage() {
                 disabled={!selectedUserId || assignMutation.isPending}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md font-medium disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
               >
-                {assignMutation.isPending ? 'Assigning...' : 'Assign'}
+                {assignMutation.isPending ? "Assigning..." : "Assign"}
               </button>
               <button
                 onClick={() => {
                   setShowAssignModal(false);
-                  setSelectedUserId('');
-                  setError('');
+                  setSelectedUserId("");
+                  setError("");
                 }}
                 className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-md font-medium transition-colors"
               >

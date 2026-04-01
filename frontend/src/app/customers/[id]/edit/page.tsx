@@ -1,25 +1,26 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { customerService } from '@/services/customer.service';
-import { Navbar } from '@/components/layout/Navbar';
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { customerService } from "@/services/customer.service";
+import { Navbar } from "@/components/layout/Navbar";
 
 export default function EditCustomerPage() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const customerId = params.id as string;
 
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
+    name: "",
+    email: "",
+    phone: "",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const { data: customer, isLoading } = useQuery({
-    queryKey: ['customer', customerId],
+    queryKey: ["customer", customerId],
     queryFn: () => customerService.getCustomer(customerId),
   });
 
@@ -28,25 +29,28 @@ export default function EditCustomerPage() {
       setFormData({
         name: customer.name,
         email: customer.email,
-        phone: customer.phone || '',
+        phone: customer.phone || "",
       });
     }
   }, [customer]);
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) =>
-      customerService.updateCustomer(customerId, data),
-    onSuccess: () => {
+    mutationFn: (data: any) => customerService.updateCustomer(customerId, data),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["customer", customerId],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["customers"] });
       router.push(`/customers/${customerId}`);
     },
     onError: (err: any) => {
-      setError(err.response?.data?.message || 'Failed to update customer');
+      setError(err.response?.data?.message || "Failed to update customer");
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     const data: any = {
       name: formData.name,
@@ -137,7 +141,7 @@ export default function EditCustomerPage() {
                 disabled={updateMutation.isPending}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md font-medium disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
               >
-                {updateMutation.isPending ? 'Updating...' : 'Update Customer'}
+                {updateMutation.isPending ? "Updating..." : "Update Customer"}
               </button>
               <button
                 type="button"

@@ -2,8 +2,12 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'ADMIN' | 'MEMBER';
+  role: "ADMIN" | "MEMBER";
   organizationId: string;
+  createdAt?: string;
+  _count?: {
+    assignedCustomers: number;
+  };
 }
 
 export interface AuthResponse {
@@ -29,6 +33,7 @@ export interface Customer {
   _count?: {
     notes: number;
   };
+  notes?: Note[];
 }
 
 export interface Note {
@@ -46,12 +51,29 @@ export interface Note {
   updatedAt: string;
 }
 
+export interface ActivityLogMetadata {
+  noteId?: string;
+  notePreview?: string;
+  customerName?: string;
+  customerEmail?: string;
+  assignedToName?: string;
+  autoAssigned?: boolean;
+  changes?: Record<
+    string,
+    {
+      from: string | null;
+      to: string | null;
+    }
+  >;
+  restored?: boolean;
+}
+
 export interface ActivityLog {
   id: string;
   entityType: string;
   entityId: string;
   action: string;
-  metadata?: any;
+  metadata?: ActivityLogMetadata;
   performedById: string;
   performedBy: {
     id: string;

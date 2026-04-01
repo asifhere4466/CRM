@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import api from '@/services/api';
-import { Navbar } from '@/components/layout/Navbar';
-import { useAuthStore } from '@/store/auth.store';
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import api from "@/services/api";
+import { Navbar } from "@/components/layout/Navbar";
+import { useAuthStore } from "@/store/auth.store";
 
 interface Organization {
   id: string;
@@ -40,38 +40,52 @@ interface Customer {
 export default function AdminOrganizationsPage() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const [selectedView, setSelectedView] = useState<'organizations' | 'customers' | 'notes'>('organizations');
+  const [selectedView, setSelectedView] = useState<
+    "organizations" | "customers" | "notes"
+  >("organizations");
 
   const { data: organizations, isLoading: loadingOrgs } = useQuery({
-    queryKey: ['admin-organizations'],
+    queryKey: ["admin-organizations"],
     queryFn: async () => {
-      const response = await api.get<Organization[]>('/organizations');
+      const response = await api.get<Organization[]>("/organizations");
       return response.data;
     },
-    enabled: user?.role === 'ADMIN',
+    enabled: user?.role === "ADMIN",
+    staleTime: 1000 * 60 * 2,
+    cacheTime: 1000 * 60 * 5,
   });
 
   const { data: allCustomers, isLoading: loadingCustomers } = useQuery({
-    queryKey: ['admin-all-customers'],
+    queryKey: ["admin-all-customers"],
     queryFn: async () => {
-      const response = await api.get<Customer[]>('/organizations/admin/customers');
+      const response = await api.get<Customer[]>(
+        "/organizations/admin/customers",
+      );
       return response.data;
     },
-    enabled: selectedView === 'customers' && user?.role === 'ADMIN',
+    enabled: selectedView === "customers" && user?.role === "ADMIN",
   });
 
   const { data: allNotes, isLoading: loadingNotes } = useQuery({
-    queryKey: ['admin-all-notes'],
+    queryKey: ["admin-all-notes"],
     queryFn: async () => {
-      const response = await api.get('/organizations/admin/notes');
+      const response = await api.get("/organizations/admin/notes");
       return response.data;
     },
-    enabled: selectedView === 'notes' && user?.role === 'ADMIN',
+    enabled: selectedView === "notes" && user?.role === "ADMIN",
   });
 
-  // Redirect if not admin (after all hooks)
-  if (user?.role !== 'ADMIN') {
-    router.push('/customers');
+  useEffect(() => {
+    if (user && user.role !== "ADMIN") {
+      router.push("/customers");
+    }
+  }, [user, router]);
+
+  if (!user) {
+    return null;
+  }
+
+  if (user.role !== "ADMIN") {
     return null;
   }
 
@@ -91,31 +105,31 @@ export default function AdminOrganizationsPage() {
         <div className="border-b border-gray-200 mb-6">
           <nav className="-mb-px flex space-x-8">
             <button
-              onClick={() => setSelectedView('organizations')}
+              onClick={() => setSelectedView("organizations")}
               className={`${
-                selectedView === 'organizations'
-                  ? 'border-purple-500 text-purple-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                selectedView === "organizations"
+                  ? "border-purple-500 text-purple-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
               Organizations
             </button>
             <button
-              onClick={() => setSelectedView('customers')}
+              onClick={() => setSelectedView("customers")}
               className={`${
-                selectedView === 'customers'
-                  ? 'border-purple-500 text-purple-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                selectedView === "customers"
+                  ? "border-purple-500 text-purple-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
               All Customers
             </button>
             <button
-              onClick={() => setSelectedView('notes')}
+              onClick={() => setSelectedView("notes")}
               className={`${
-                selectedView === 'notes'
-                  ? 'border-purple-500 text-purple-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                selectedView === "notes"
+                  ? "border-purple-500 text-purple-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
             >
               All Notes
@@ -124,7 +138,7 @@ export default function AdminOrganizationsPage() {
         </div>
 
         {/* Organizations View */}
-        {selectedView === 'organizations' && (
+        {selectedView === "organizations" && (
           <>
             {loadingOrgs && (
               <div className="text-center py-12">
@@ -177,7 +191,7 @@ export default function AdminOrganizationsPage() {
         )}
 
         {/* All Customers View */}
-        {selectedView === 'customers' && (
+        {selectedView === "customers" && (
           <>
             {loadingCustomers && (
               <div className="text-center py-12">
@@ -223,7 +237,7 @@ export default function AdminOrganizationsPage() {
                           {customer.email}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {customer.assignedTo?.name || 'Unassigned'}
+                          {customer.assignedTo?.name || "Unassigned"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {customer._count.notes}
@@ -244,7 +258,7 @@ export default function AdminOrganizationsPage() {
         )}
 
         {/* All Notes View */}
-        {selectedView === 'notes' && (
+        {selectedView === "notes" && (
           <>
             {loadingNotes && (
               <div className="text-center py-12">

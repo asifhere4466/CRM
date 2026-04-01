@@ -1,55 +1,55 @@
-import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import { PrismaClient } from "@prisma/client";
+import * as bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding database...');
+  console.log("🌱 Seeding database...");
 
   const org1 = await prisma.organization.upsert({
-    where: { id: 'org-1' },
+    where: { id: "org-1" },
     update: {},
     create: {
-      id: 'org-1',
-      name: 'Acme Corporation',
+      id: "org-1",
+      name: "Acme Corporation",
     },
   });
 
   const org2 = await prisma.organization.upsert({
-    where: { id: 'org-2' },
+    where: { id: "org-2" },
     update: {},
     create: {
-      id: 'org-2',
-      name: 'TechStart Inc',
+      id: "org-2",
+      name: "TechStart Inc",
     },
   });
 
   const org3 = await prisma.organization.upsert({
-    where: { id: 'org-3' },
+    where: { id: "org-3" },
     update: {},
     create: {
-      id: 'org-3',
-      name: 'Global Solutions Ltd',
+      id: "org-3",
+      name: "Global Solutions Ltd",
     },
   });
 
-  console.log('✅ Organizations created');
+  console.log("✅ Organizations created");
 
-  const hashedPassword = await bcrypt.hash('password123', 10);
+  const hashedPassword = await bcrypt.hash("password123", 10);
 
   const adminUser = await prisma.user.upsert({
     where: {
       email_organizationId: {
-        email: 'admin@acme.com',
+        email: "admin@acme.com",
         organizationId: org1.id,
       },
     },
     update: {},
     create: {
-      email: 'admin@acme.com',
-      name: 'Admin User',
+      email: "admin@acme.com",
+      name: "Admin User",
       password: hashedPassword,
-      role: 'ADMIN',
+      role: "ADMIN",
       organizationId: org1.id,
     },
   });
@@ -57,16 +57,16 @@ async function main() {
   const memberUser1 = await prisma.user.upsert({
     where: {
       email_organizationId: {
-        email: 'member@acme.com',
+        email: "member@acme.com",
         organizationId: org1.id,
       },
     },
     update: {},
     create: {
-      email: 'member@acme.com',
-      name: 'John Smith',
+      email: "member@acme.com",
+      name: "John Smith",
       password: hashedPassword,
-      role: 'MEMBER',
+      role: "MEMBER",
       organizationId: org1.id,
     },
   });
@@ -74,16 +74,16 @@ async function main() {
   const memberUser2 = await prisma.user.upsert({
     where: {
       email_organizationId: {
-        email: 'sarah@acme.com',
+        email: "sarah@acme.com",
         organizationId: org1.id,
       },
     },
     update: {},
     create: {
-      email: 'sarah@acme.com',
-      name: 'Sarah Johnson',
+      email: "sarah@acme.com",
+      name: "Sarah Johnson",
       password: hashedPassword,
-      role: 'MEMBER',
+      role: "MEMBER",
       organizationId: org1.id,
     },
   });
@@ -91,16 +91,16 @@ async function main() {
   const memberUser3 = await prisma.user.upsert({
     where: {
       email_organizationId: {
-        email: 'mike@acme.com',
+        email: "mike@acme.com",
         organizationId: org1.id,
       },
     },
     update: {},
     create: {
-      email: 'mike@acme.com',
-      name: 'Mike Davis',
+      email: "mike@acme.com",
+      name: "Mike Davis",
       password: hashedPassword,
-      role: 'MEMBER',
+      role: "MEMBER",
       organizationId: org1.id,
     },
   });
@@ -108,16 +108,16 @@ async function main() {
   const org2Admin = await prisma.user.upsert({
     where: {
       email_organizationId: {
-        email: 'admin@techstart.com',
+        email: "admin@techstart.com",
         organizationId: org2.id,
       },
     },
     update: {},
     create: {
-      email: 'admin@techstart.com',
-      name: 'Tech Admin',
+      email: "admin@techstart.com",
+      name: "Tech Admin",
       password: hashedPassword,
-      role: 'ADMIN',
+      role: "ADMIN",
       organizationId: org2.id,
     },
   });
@@ -125,49 +125,83 @@ async function main() {
   const org2Member = await prisma.user.upsert({
     where: {
       email_organizationId: {
-        email: 'member@techstart.com',
+        email: "member@techstart.com",
         organizationId: org2.id,
       },
     },
     update: {},
     create: {
-      email: 'member@techstart.com',
-      name: 'Tech Member',
+      email: "member@techstart.com",
+      name: "Tech Member",
       password: hashedPassword,
-      role: 'MEMBER',
+      role: "MEMBER",
       organizationId: org2.id,
     },
   });
 
-  console.log('✅ Users created');
+  const org3Admin = await prisma.user.upsert({
+    where: {
+      email_organizationId: {
+        email: "admin@globalsolutions.com",
+        organizationId: org3.id,
+      },
+    },
+    update: {},
+    create: {
+      email: "admin@globalsolutions.com",
+      name: "Global Admin",
+      password: hashedPassword,
+      role: "ADMIN",
+      organizationId: org3.id,
+    },
+  });
+
+  const org3Member = await prisma.user.upsert({
+    where: {
+      email_organizationId: {
+        email: "member@globalsolutions.com",
+        organizationId: org3.id,
+      },
+    },
+    update: {},
+    create: {
+      email: "member@globalsolutions.com",
+      name: "Global Member",
+      password: hashedPassword,
+      role: "MEMBER",
+      organizationId: org3.id,
+    },
+  });
+
+  console.log("✅ Users created");
 
   const customers = [];
   const customerNames = [
-    'Alice Williams',
-    'Bob Brown',
-    'Carol Davis',
-    'David Miller',
-    'Emma Wilson',
-    'Frank Moore',
-    'Grace Taylor',
-    'Henry Anderson',
-    'Ivy Thomas',
-    'Jack Jackson',
-    'Kate White',
-    'Liam Harris',
-    'Mia Martin',
-    'Noah Thompson',
-    'Olivia Garcia',
-    'Peter Martinez',
-    'Quinn Robinson',
-    'Rachel Clark',
-    'Sam Rodriguez',
-    'Tina Lewis',
+    "Alice Williams",
+    "Bob Brown",
+    "Carol Davis",
+    "David Miller",
+    "Emma Wilson",
+    "Frank Moore",
+    "Grace Taylor",
+    "Henry Anderson",
+    "Ivy Thomas",
+    "Jack Jackson",
+    "Kate White",
+    "Liam Harris",
+    "Mia Martin",
+    "Noah Thompson",
+    "Olivia Garcia",
+    "Peter Martinez",
+    "Quinn Robinson",
+    "Rachel Clark",
+    "Sam Rodriguez",
+    "Tina Lewis",
   ];
 
   for (let i = 0; i < customerNames.length; i++) {
     const name = customerNames[i];
-    const email = name.toLowerCase().replace(' ', '.') + '@example.com';
+    const email = name.toLowerCase().replace(" ", ".") + "@example.com";
     const assignedUser =
       i < 5
         ? memberUser1.id
@@ -191,9 +225,9 @@ async function main() {
 
     await prisma.activityLog.create({
       data: {
-        entityType: 'customer',
+        entityType: "customer",
         entityId: customer.id,
-        action: 'CUSTOMER_CREATED',
+        action: "CUSTOMER_CREATED",
         performedById: adminUser.id,
         organizationId: org1.id,
         metadata: {
@@ -206,9 +240,9 @@ async function main() {
     if (assignedUser) {
       await prisma.activityLog.create({
         data: {
-          entityType: 'customer',
+          entityType: "customer",
           entityId: customer.id,
-          action: 'CUSTOMER_ASSIGNED',
+          action: "CUSTOMER_ASSIGNED",
           performedById: adminUser.id,
           organizationId: org1.id,
           metadata: {
@@ -219,7 +253,7 @@ async function main() {
     }
   }
 
-  console.log('✅ Customers created');
+  console.log("✅ Customers created");
 
   for (let i = 0; i < 10; i++) {
     const customer = customers[i];
@@ -234,9 +268,9 @@ async function main() {
 
     await prisma.activityLog.create({
       data: {
-        entityType: 'note',
+        entityType: "note",
         entityId: note.id,
-        action: 'NOTE_ADDED',
+        action: "NOTE_ADDED",
         performedById: memberUser1.id,
         organizationId: org1.id,
         metadata: {
@@ -247,7 +281,7 @@ async function main() {
     });
   }
 
-  console.log('✅ Notes created');
+  console.log("✅ Notes created");
 
   const org2Customers = [];
   for (let i = 0; i < 5; i++) {
@@ -261,15 +295,59 @@ async function main() {
       },
     });
     org2Customers.push(customer);
+
+    await prisma.activityLog.create({
+      data: {
+        entityType: "customer",
+        entityId: customer.id,
+        action: "CUSTOMER_CREATED",
+        performedById: org2Admin.id,
+        organizationId: org2.id,
+        metadata: {
+          customerName: customer.name,
+          customerEmail: customer.email,
+        },
+      },
+    });
   }
 
-  console.log('✅ Org2 customers created');
+  console.log("✅ Org2 customers created");
+
+  const org3Customers = [];
+  for (let i = 0; i < 5; i++) {
+    const customer = await prisma.customer.create({
+      data: {
+        name: `Global Customer ${i + 1}`,
+        email: `global${i + 1}@globalsolutions.com`,
+        phone: `+1${Math.floor(Math.random() * 9000000000 + 1000000000)}`,
+        organizationId: org3.id,
+        assignedToId: org3Member.id,
+      },
+    });
+    org3Customers.push(customer);
+
+    await prisma.activityLog.create({
+      data: {
+        entityType: "customer",
+        entityId: customer.id,
+        action: "CUSTOMER_CREATED",
+        performedById: org3Admin.id,
+        organizationId: org3.id,
+        metadata: {
+          customerName: customer.name,
+          customerEmail: customer.email,
+        },
+      },
+    });
+  }
+
+  console.log("✅ Org3 customers created");
 
   const deletedCustomer = await prisma.customer.create({
     data: {
-      name: 'Deleted Customer',
-      email: 'deleted@example.com',
-      phone: '+11234567890',
+      name: "Deleted Customer",
+      email: "deleted@example.com",
+      phone: "+11234567890",
       organizationId: org1.id,
       assignedToId: memberUser1.id,
       deletedAt: new Date(),
@@ -278,9 +356,9 @@ async function main() {
 
   await prisma.activityLog.create({
     data: {
-      entityType: 'customer',
+      entityType: "customer",
       entityId: deletedCustomer.id,
-      action: 'CUSTOMER_DELETED',
+      action: "CUSTOMER_DELETED",
       performedById: adminUser.id,
       organizationId: org1.id,
       metadata: {
@@ -289,27 +367,31 @@ async function main() {
     },
   });
 
-  console.log('✅ Soft-deleted customer created for testing');
+  console.log("✅ Soft-deleted customer created for testing");
 
-  console.log('\n🎉 Seed data created successfully!');
-  console.log('=====================================');
-  console.log('\n📊 Summary:');
+  console.log("\n🎉 Seed data created successfully!");
+  console.log("=====================================");
+  console.log("\n📊 Summary:");
   console.log(`  - Organizations: 3`);
-  console.log(`  - Users: 6`);
+  console.log(`  - Users: 8`);
   console.log(`  - Customers (Org1): ${customers.length}`);
   console.log(`  - Customers (Org2): ${org2Customers.length}`);
+  console.log(`  - Customers (Org3): ${org3Customers.length}`);
   console.log(`  - Notes: 10`);
   console.log(`  - Soft-deleted: 1`);
-  console.log('\n🔐 Login Credentials:');
-  console.log('  Acme Corporation (Org1):');
-  console.log('    Admin:  admin@acme.com / password123');
-  console.log('    Member: member@acme.com / password123');
-  console.log('    Member: sarah@acme.com / password123');
-  console.log('    Member: mike@acme.com / password123');
-  console.log('\n  TechStart Inc (Org2):');
-  console.log('    Admin:  admin@techstart.com / password123');
-  console.log('    Member: member@techstart.com / password123');
-  console.log('=====================================\n');
+  console.log("\n🔐 Login Credentials:");
+  console.log("  Acme Corporation (Org1):");
+  console.log("    Admin:  admin@acme.com / password123");
+  console.log("    Member: member@acme.com / password123");
+  console.log("    Member: sarah@acme.com / password123");
+  console.log("    Member: mike@acme.com / password123");
+  console.log("\n  TechStart Inc (Org2):");
+  console.log("    Admin:  admin@techstart.com / password123");
+  console.log("    Member: member@techstart.com / password123");
+  console.log("\n  Global Solutions Ltd (Org3):");
+  console.log("    Admin:  admin@globalsolutions.com / password123");
+  console.log("    Member: member@globalsolutions.com / password123");
+  console.log("=====================================\n");
 }
 
 main()

@@ -1,29 +1,32 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
-import { userService } from '@/services/user.service';
-import { Navbar } from '@/components/layout/Navbar';
-import { useAuthStore } from '@/store/auth.store';
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { userService } from "@/services/user.service";
+import { Navbar } from "@/components/layout/Navbar";
+import { useAuthStore } from "@/store/auth.store";
 
 export default function UsersPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    role: 'MEMBER' as 'ADMIN' | 'MEMBER',
+    name: "",
+    email: "",
+    password: "",
+    role: "MEMBER" as "ADMIN" | "MEMBER",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const { data: users, isLoading } = useQuery({
-    queryKey: ['users'],
+    queryKey: ["users"],
     queryFn: userService.getUsers,
-    enabled: user?.role === 'ADMIN',
+    enabled: user?.role === "ADMIN",
+    staleTime: 1000 * 60 * 2, // cache 2 minutes for instant navigation
+    cacheTime: 1000 * 60 * 5,
   });
 
   const createUserMutation = useMutation({
@@ -31,27 +34,35 @@ export default function UsersPage() {
       userService.createUser(data.name, data.email, data.password, data.role),
     onSuccess: () => {
       setShowCreateModal(false);
-      setFormData({ name: '', email: '', password: '', role: 'MEMBER' });
-      setError('');
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setFormData({ name: "", email: "", password: "", role: "MEMBER" });
+      setError("");
+      queryClient.invalidateQueries({ queryKey: ["users"] });
     },
     onError: (err: any) => {
-      setError(err.response?.data?.message || 'Failed to create user');
+      setError(err.response?.data?.message || "Failed to create user");
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.password) {
-      setError('All fields are required');
+      setError("All fields are required");
       return;
     }
     createUserMutation.mutate(formData);
   };
 
-  // Redirect if not admin (after all hooks)
-  if (user?.role !== 'ADMIN') {
-    router.push('/customers');
+  useEffect(() => {
+    if (user && user.role !== "ADMIN") {
+      router.push("/customers");
+    }
+  }, [user, router]);
+
+  if (!user) {
+    return null;
+  }
+
+  if (user.role !== "ADMIN") {
     return null;
   }
 
@@ -62,7 +73,9 @@ export default function UsersPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Users Management</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Users Management
+            </h1>
             <p className="mt-1 text-sm text-gray-500">
               Admin only - Manage users in your organization
             </p>
@@ -116,9 +129,9 @@ export default function UsersPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          u.role === 'ADMIN'
-                            ? 'bg-purple-100 text-purple-800'
-                            : 'bg-blue-100 text-blue-800'
+                          u.role === "ADMIN"
+                            ? "bg-purple-100 text-purple-800"
+                            : "bg-blue-100 text-blue-800"
                         }`}
                       >
                         {u.role}
@@ -128,7 +141,9 @@ export default function UsersPage() {
                       {u._count?.assignedCustomers || 0} / 5
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(u.createdAt).toLocaleDateString()}
+                      {u.createdAt
+                        ? new Date(u.createdAt).toLocaleDateString()
+                        : "-"}
                     </td>
                   </tr>
                 ))}
@@ -193,15 +208,58 @@ export default function UsersPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Password
                   </label>
-                  <input
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="••••••••"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password}
+                      onChange={(e) =>
+                        setFormData({ ...formData, password: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute inset-y-0 right-2 flex items-center px-2 text-gray-500 hover:text-gray-700"
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                    >
+                      {showPassword ? (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-5 w-5"
+                        >
+                          <path d="M1 1l22 22" />
+                          <path d="M17.94 17.94A10.57 10.57 0 0 1 12 20.5C7 20.5 2.73 17.28 1 12c.8-2.32 2.18-4.32 3.94-5.86" />
+                          <path d="M9.53 9.53A3 3 0 0 0 14.47 14.47" />
+                          <path d="M8.55 5.61A10.57 10.57 0 0 1 12 3.5c5 0 9.27 3.22 11 8.5-1.06 3.09-3.08 5.63-5.63 7.05" />
+                        </svg>
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-5 w-5"
+                        >
+                          <path d="M1 12C2.73 6.72 7 3.5 12 3.5c5 0 9.27 3.22 11 8.5-1.06 3.09-3.08 5.63-5.63 7.05" />
+                          <path d="M12 7.5a4.5 4.5 0 0 0-4.5 4.5 4.5 4.5 0 0 0 4.5 4.5" />
+                          <circle cx="12" cy="12" r="2.5" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <div>
@@ -213,7 +271,7 @@ export default function UsersPage() {
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        role: e.target.value as 'ADMIN' | 'MEMBER',
+                        role: e.target.value as "ADMIN" | "MEMBER",
                       })
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -230,14 +288,19 @@ export default function UsersPage() {
                   disabled={createUserMutation.isPending}
                   className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md font-medium disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                 >
-                  {createUserMutation.isPending ? 'Creating...' : 'Create User'}
+                  {createUserMutation.isPending ? "Creating..." : "Create User"}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
                     setShowCreateModal(false);
-                    setFormData({ name: '', email: '', password: '', role: 'MEMBER' });
-                    setError('');
+                    setFormData({
+                      name: "",
+                      email: "",
+                      password: "",
+                      role: "MEMBER",
+                    });
+                    setError("");
                   }}
                   className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-md font-medium transition-colors"
                 >
