@@ -26,7 +26,7 @@ export default function UsersPage() {
     queryFn: userService.getUsers,
     enabled: user?.role === "ADMIN",
     staleTime: 1000 * 60 * 2, // cache 2 minutes for instant navigation
-    cacheTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 5,
   });
 
   const createUserMutation = useMutation({

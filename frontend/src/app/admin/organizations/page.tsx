@@ -52,7 +52,7 @@ export default function AdminOrganizationsPage() {
     },
     enabled: user?.role === "ADMIN",
     staleTime: 1000 * 60 * 2,
-    cacheTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 5,
   });
 
   const { data: allCustomers, isLoading: loadingCustomers } = useQuery({
