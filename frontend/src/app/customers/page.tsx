@@ -25,7 +25,7 @@ export default function CustomersPage() {
     import("@/types").PaginatedResponse<import("@/types").Customer>,
     Error
   >({
-    queryKey: ["customers", page, debouncedSearch, activeTab],
+    queryKey: ["customers", page, debouncedSearch, activeTab, includeDeleted],
     queryFn: () =>
       customerService.getCustomers(page, 20, debouncedSearch, includeDeleted),
     staleTime: 1000 * 30,
